@@ -4,42 +4,37 @@
 name: GLaDOS Clock In
 
 on:
-  
-  # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓修改下面的cron表达式
+  push:
+    branches:
+      - main
+  watch:
+    types: started
   schedule: # Actions自动运行，自动签到时间，cron表达式，不会的看README
     - cron: "0 */8 * * *" # 分 时 日 月 星期
-    
-  push:
-    branches: ["main"]
-    paths:  
-      - 'modify.txt'
-      - '.github/workflows/*'
 
 jobs:
-  GLaDOS-CheckIn:
+  GLaDOS-ClockIn:
     runs-on: ubuntu-latest
-
+    if: github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule'
     steps:
-      - name: 拉取代码
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: 准备Python 3.10 # Set up Python 3.10
+      - name: Setup Python
         uses: actions/setup-python@v3
         with:
           python-version: "3.10"
 
-      - name: 安装Python依赖
+      - name: Install packages
         run: |
           if [ -f ./GLaDOS/requirements.txt ]; then pip install -r ./GLaDOS/requirements.txt; fi
 
-      - name: 开始签到
+      - name: Clock In
         env:
           cookie: ${{ secrets.GLADOS_COOKIE }}    # cookie
-          # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 默认值0(不推送消息)，可选值1(开启Server酱消息推送)
-          isServerJpush: 0
+          isServerJpush: 0 # 默认值0(不推送消息)，可选值1(开启Server酱消息推送)
           SendKey: ${{ secrets.SENDKEY }}         # SendKey
-          # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ 默认值0(不推送消息)，可选值1(开启pushplus消息推送)
-          ispushpluspush: 0
+          ispushpluspush: 0 # 默认值0(不推送消息)，可选值1(开启pushplus消息推送)
           token: ${{ secrets.TOKEN }}             # token
         run: |
           python ./GLaDOS/main.py
